@@ -1,6 +1,6 @@
 # node_httpd
 
-Execute $node/bin/httpd.js
+Execute $node bin/httpd.js
 
 Top directory = ./www
 
@@ -30,4 +30,7 @@ ENV value of ejs
 
         DEFINE['name']      ./etc/define.json
 
-Setting file        ./etc/config.json
+
+Setting file        
+
+	./etc/config.json
