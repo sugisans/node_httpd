@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ja" manifest="">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="theme-color" content="#333333">
+    <title>
+        <%= config['title'] %>
+    </title>
+</head>
+
+<body>
+    <header>
+        <h1>
+            <%= config['title'] %>
+        </h1>
+    </header>
+    <hr>
+
+    <section>
+        <strong>It works!</strong><br>
+        <pre>
+            Port number = <%= config['port'] %>
+            Top directory = <%= config['root_dir'] %>
+            View files are html or ejs
+
+            Examples
+                <%= config['root_dir'] %>/example.html
+                <%= config['root_dir'] %>/example.ejs
+                <%= config['root_dir'] %>/css/example.css
+                <%= config['root_dir'] %>/js/example.js
+                <%= config['root_dir'] %>/img/example.jpg
+
+            ENV value of ejs
+                POST['name']
+                GET['name']
+                COOKIE['name']      response.setHeader('Set-Cookie', [`value; expires; max-age`]);
+                DEFINE['name']      ./etc/define.json
+
+            Setting file        ./etc/config.json
+        </pre>
+    </section>
+</body>
+
+</html>

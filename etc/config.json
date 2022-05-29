@@ -1,0 +1,14 @@
+{
+    "title": "node http server",
+    "version": "v1.0",
+    "root_dir": "./www",
+    "escapejs": "on",
+    "system_user": "",
+    "ssl_key_file": "",
+    "ssl_cert_file": "",
+    "port": 3000,
+    "LOG": {
+        "status": "off",
+        "dir": "./log"
+    }
+}
