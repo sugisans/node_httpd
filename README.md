@@ -1,4 +1,4 @@
-#node_httpd
+# node_httpd
 
 Execute $node/bin/httpd.js
 
@@ -27,7 +27,7 @@ ENV value of ejs
         GET['name']
 
         COOKIE['name']      response.setHeader('Set-Cookie', [`value; expires; max-age`]);
-        
+
         DEFINE['name']      ./etc/define.json
 
 Setting file        ./etc/config.json
