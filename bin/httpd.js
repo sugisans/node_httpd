@@ -116,87 +116,87 @@ console.log(`PORT=${port}\n${config['title']} running!`);
 
 //request
 function RouteSetting(req, res) {
-    // try {
-    const urldata = url.parse(req.url, true);
-    const extname = String(path.extname(urldata.pathname)).toLowerCase();
-    const POST = [];
-    const GET = request_get(urldata.search);
-    const COOKIE = get_cookie(req.headers['cookie']);
-    const DEFINE = JSON.parse(fs.readFileSync('etc/define.json', 'UTF-8'));
-    let content_type = !extname ? 'text/html' : mime_type[extname] || 'text/plain';
-    let encode = content_type.split('/', 2)[0] === 'text' ? 'UTF-8' : null;
-    let file, page;
+    try {
+        const urldata = url.parse(req.url, true);
+        const extname = String(path.extname(urldata.pathname)).toLowerCase();
+        const POST = [];
+        const GET = request_get(urldata.search);
+        const COOKIE = get_cookie(req.headers['cookie']);
+        const DEFINE = JSON.parse(fs.readFileSync('etc/define.json', 'UTF-8'));
+        let content_type = !extname ? 'text/html' : mime_type[extname] || 'text/plain';
+        let encode = content_type.split('/', 2)[0] === 'text' ? 'UTF-8' : null;
+        let file, page;
 
-    if (config['LOG']['status'] == 'on') {
-        const ip = req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',', 2)[0] : req.socket['remoteAddress'];
-        const ua = req.headers['user-agent'];
-        const log_data = `${urldata.href} <= ${ip} ${ua}\n`;
-        fs.appendFile(log_file, log_data, function(err) {
-            if (err) {
-                console.error("log write error");
-            }
-        });
-    }
-    if (urldata.pathname == '/') { //index
-        let index = '';
-        fs.readdir(config['root_dir'], function(err, files) {
-            if (err) throw err;
-            for (let get of files) {
-                if (get == 'index.ejs') {
-                    index = get;
-                    break;
+        if (config['LOG']['status'] == 'on') {
+            const ip = req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',', 2)[0] : req.socket['remoteAddress'];
+            const ua = req.headers['user-agent'];
+            const log_data = `${urldata.href} <= ${ip} ${ua}\n`;
+            fs.appendFile(log_file, log_data, function(err) {
+                if (err) {
+                    console.error("log write error");
                 }
-                if (get == 'index.html') {
-                    index = get;
+            });
+        }
+        if (urldata.pathname == '/') { //index
+            let index = '';
+            fs.readdir(config['root_dir'], function(err, files) {
+                if (err) throw err;
+                for (let get of files) {
+                    if (get == 'index.ejs') {
+                        index = get;
+                        break;
+                    }
+                    if (get == 'index.html') {
+                        index = get;
+                    }
                 }
-            }
-            file = config['root_dir'] + urldata.path + index;
+                file = config['root_dir'] + urldata.path + index;
+                fs.readFile(String(file), encode, function(err, data) {
+                    if (!err) {
+                        if (index == 'index.ejs') {
+                            if (ejs_render(req, res, data, POST, GET, COOKIE, DEFINE)) return;
+                            page = status_page(400);
+                        } else {
+                            page = data;
+                        }
+                    } else {
+                        page = ejs.render(indexEjs, { config });
+                    }
+                    res.writeHead(200, { 'Content-Type': 'text/html' });
+                    res.write(page);
+                    res.end();
+                });
+            });
+        } else {
+            file = config['root_dir'] + urldata.path;
             fs.readFile(String(file), encode, function(err, data) {
                 if (!err) {
-                    if (index == 'index.ejs') {
+                    if (content_type == 'text/html' && extname == '.ejs') { //.ejs
                         if (ejs_render(req, res, data, POST, GET, COOKIE, DEFINE)) return;
                         page = status_page(400);
+                    } else if (content_type === 'text/javascript' && config['escapejs'] === 'on') { //.js
+                        page = escapeJS(data);
                     } else {
                         page = data;
                     }
+                } else if (err.code === 'ENOENT') { //not page
+                    content_type = 'text/html';
+                    page = status_page(404);
                 } else {
-                    page = ejs.render(indexEjs, { config });
+                    content_type = 'text/html';
+                    page = status_page(400);
                 }
-                res.writeHead(200, { 'Content-Type': 'text/html' });
+                res.writeHead(200, { 'Content-Type': content_type });
                 res.write(page);
                 res.end();
             });
-        });
-    } else {
-        file = config['root_dir'] + urldata.path;
-        fs.readFile(String(file), encode, function(err, data) {
-            if (!err) {
-                if (content_type == 'text/html' && extname == '.ejs') { //.ejs
-                    if (ejs_render(req, res, data, POST, GET, COOKIE, DEFINE)) return;
-                    page = status_page(400);
-                } else if (content_type === 'text/javascript' && config['escapejs'] === 'on') { //.js
-                    page = escapeJS(data);
-                } else {
-                    page = data;
-                }
-            } else if (err.code === 'ENOENT') { //not page
-                content_type = 'text/html';
-                page = status_page(404);
-            } else {
-                content_type = 'text/html';
-                page = status_page(400);
-            }
-            res.writeHead(200, { 'Content-Type': content_type });
-            res.write(page);
-            res.end();
-        });
+        }
+    } catch (e) {
+        let error = `500 ${status_code['500']}\n${e.name}`;
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end(error);
+        console.error(error);
     }
-    // } catch (e) {
-    //     let error = `500 ${status_code['500']}\n${e.name}`;
-    //     res.writeHead(500, { 'Content-Type': 'text/plain' });
-    //     res.end(error);
-    //     console.error(error);
-    // }
 }
 
 function ejs_render(req, res, page, POST, GET, COOKIE, DEFINE) {
