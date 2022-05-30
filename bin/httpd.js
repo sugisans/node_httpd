@@ -15,7 +15,7 @@ const indexEjs = fs.readFileSync('etc/default_page/index.ejs', 'UTF-8');
 let config = JSON.parse(configFile);
 const mime_type = JSON.parse(mimeFile);
 const status_code = JSON.parse(statusFile);
-const log_file = config['LOG']['dir'] + '/access.log';
+const log_file = `${config['LOG']['dir']}/${config['LOG']['file']}`;
 
 //config option
 for (let i = 2; i < process.argv.length; i += 2) {

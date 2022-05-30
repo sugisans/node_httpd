@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja" manifest="">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -25,6 +25,7 @@
         <strong>It works!</strong><br>
         <pre>
             Port number = <%= config['port'] %>
+            Setting file = ./etc/config.json
             Top directory = <%= config['root_dir'] %>
             View files are html or ejs
 
@@ -41,7 +42,6 @@
                 COOKIE['name']      response.setHeader('Set-Cookie', [`value; expires; max-age`]);
                 DEFINE['name']      ./etc/define.json
 
-            Setting file        ./etc/config.json
         </pre>
     </section>
 </body>

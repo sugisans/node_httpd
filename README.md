@@ -1,13 +1,17 @@
 # node_httpd
 
-Execute $node bin/httpd.js
+Execute = $node bin/httpd.js
+
+Default access = http://localhost:3000
+
+Setting file = ./etc/config.json
 
 Top directory = ./www
 
-View files are html or ejs
-
 
 Examples
+
+        View files are html or ejs
 
         ./www/example.html
 
@@ -30,7 +34,3 @@ ENV value of ejs
 
         DEFINE['name']      ./etc/define.json
 
-
-Setting file        
-
-	./etc/config.json
