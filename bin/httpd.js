@@ -4,6 +4,8 @@ const url = require('url');
 const fs = require('fs');
 const ejs = require('ejs');
 const path = require('path');
+const cluster = require("cluster");
+const cpu = require('os').cpus();
 
 const configFile = fs.readFileSync('etc/config.json', 'UTF-8');
 const mimeFile = fs.readFileSync('etc/mime.json', 'UTF-8');
@@ -68,55 +70,66 @@ for (let i = 2; i < process.argv.length; i += 2) {
     }
 }
 
-let server = http.createServer(RouteSetting);
-const port = parseInt(config['port']);
-const uid = process.getuid();
-const gid = process.getgroups();
-switch (port) {
-    case 443:
-        const https = require('https');
-        try {
-            const SSL_AUTH = {
-                "key": fs.readFileSync(config['ssl_key_file'], 'UTF-8'),
-                "cert": fs.readFileSync(config['ssl_cert_file'], 'UTF-8')
-            };
-            server = https.createServer(SSL_AUTH, RouteSetting);
-        } catch (err) {
-            if (err.code === 'ENOENT') {
-                console.error("Can't read ssl files");
-            } else {
-                console.error(`${err.name}:${err.code}`);
-            }
-            process.exit(-1);
-        }
-    case 80:
-        if (uid != 0 || gid[0] != 0) {
-            console.error("Not permission\nPlease root uid or root gid");
-            process.exit(-1);
-        }
-        if (!config['system_user']) {
-            console.log("Warnings!! Don's exists system_user from config file");
-        }
-        server.listen(port, function() {
-            process.setuid(config['system_user'] || 'www');
-            console.log("root(0) -> child");
-        });
-        break;
-    default:
-        if (port < 1024 || port > 65535) {
-            console.log("port error [80 or 443 or 1024-65535]");
-            process.exit(-1);
-        }
-        server.listen(process.env.PORT || port);
-}
+//cluster proecss
+if (cluster.isMaster) {
+    for (let i = 0; i < cpu.length; i++) {
+        cluster.fork({ msg: `ID${i}` })
+            .on("message", msg => console.log(msg));
+    }
+} else {
+    let server = http.createServer(RouteSetting);
+    const port = parseInt(config['port']);
+    const uid = process.getuid();
+    const gid = process.getgroups();
 
-console.log(`PID=${process.pid}`);
-console.log(`PORT=${port}\n${config['title']} running!`);
+    switch (port) {
+        case 443:
+            const https = require('https');
+            try {
+                const SSL_AUTH = {
+                    "key": fs.readFileSync(config['ssl_key_file'], 'UTF-8'),
+                    "cert": fs.readFileSync(config['ssl_cert_file'], 'UTF-8')
+                };
+                server = https.createServer(SSL_AUTH, RouteSetting);
+            } catch (err) {
+                if (err.code === 'ENOENT') {
+                    console.error("Can't read ssl files");
+                } else {
+                    console.error(`${err.name}:${err.code}`);
+                }
+                process.exit(-1);
+            }
+        case 80:
+            if (uid != 0 || gid[0] != 0) {
+                console.error("Not permission\nPlease root uid or root gid");
+                process.exit(-1);
+            }
+            if (!config['system_user']) {
+                console.log("Warnings!! Don's exists system_user from config file");
+            }
+            server.listen(port, function() {
+                process.setuid(config['system_user'] || 'www');
+                console.log("root(0) -> child");
+            });
+            break;
+        default:
+            if (port < 1024 || port > 65535) {
+                console.log("port error [80 or 443 or 1024-65535]");
+                process.exit(-1);
+            }
+            server.listen(process.env.PORT || port);
+    }
+
+    const msg = process.env.msg;
+    process.send(`from worker (${msg})`);
+    console.log(`PORT=${port}\n${config['title']} running!`);
+}
 
 
 //request
 function RouteSetting(req, res) {
     try {
+        console.log(`PID=${process.pid}`);
         const urldata = url.parse(req.url, true);
         const extname = String(path.extname(urldata.pathname)).toLowerCase();
         const POST = [];

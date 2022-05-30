@@ -1,10 +1,12 @@
 {
   "dependencies": {
+    "cluster": "^0.7.7",
     "ejs": "^3.1.8",
     "fs": "^0.0.1-security",
     "http": "^0.0.1-security",
     "https": "^1.0.0",
     "keypress": "^0.2.1",
+    "os": "^0.1.2",
     "path": "^0.12.7",
     "process": "^0.11.10"
   }
