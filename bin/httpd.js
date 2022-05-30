@@ -125,6 +125,10 @@ if (cluster.isMaster) {
     console.log(`PORT=${port}\n${config['title']} running!`);
 }
 
+cluster.on('exit', function(worker, code, signal) {
+    console.log('Worker %d died with code/signal %s. Restarting worker...', worker.process.pid, signal || code);
+    cluster.fork();
+});
 
 //request
 function RouteSetting(req, res) {
