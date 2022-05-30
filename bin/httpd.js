@@ -132,8 +132,8 @@ cluster.on('exit', function(worker, code, signal) {
 
 //request
 function RouteSetting(req, res) {
+    console.log(`PID=${process.pid}`);
     try {
-        console.log(`PID=${process.pid}`);
         const urldata = url.parse(req.url, true);
         const extname = String(path.extname(urldata.pathname)).toLowerCase();
         const POST = [];
