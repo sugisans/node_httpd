@@ -132,14 +132,9 @@ cluster.on('exit', function(worker, code, signal) {
 
 //request
 function RouteSetting(req, res) {
-    console.log(`PID=${process.pid}`);
     try {
         const urldata = url.parse(req.url, true);
         const extname = String(path.extname(urldata.pathname)).toLowerCase();
-        const POST = [];
-        const GET = request_get(urldata.search);
-        const COOKIE = get_cookie(req.headers['cookie']);
-        const DEFINE = JSON.parse(fs.readFileSync('etc/define.json', 'UTF-8'));
         let content_type = !extname ? 'text/html' : mime_type[extname] || 'text/plain';
         let encode = content_type.split('/', 2)[0] === 'text' ? 'UTF-8' : null;
         let file, page;
@@ -167,11 +162,11 @@ function RouteSetting(req, res) {
                         index = get;
                     }
                 }
-                file = config['root_dir'] + urldata.path + index;
+                file = config['root_dir'] + urldata.pathname + index;
                 fs.readFile(String(file), encode, function(err, data) {
                     if (!err) {
                         if (index == 'index.ejs') {
-                            if (ejs_render(req, res, data, POST, GET, COOKIE, DEFINE)) return;
+                            if (ejs_render(req, res, data)) return;
                             page = status_page(400);
                         } else {
                             page = data;
@@ -185,11 +180,11 @@ function RouteSetting(req, res) {
                 });
             });
         } else {
-            file = config['root_dir'] + urldata.path;
+            file = config['root_dir'] + urldata.pathname;
             fs.readFile(String(file), encode, function(err, data) {
                 if (!err) {
                     if (content_type == 'text/html' && extname == '.ejs') { //.ejs
-                        if (ejs_render(req, res, data, POST, GET, COOKIE, DEFINE)) return;
+                        if (ejs_render(req, res, data)) return;
                         page = status_page(400);
                     } else if (content_type === 'text/javascript' && config['escapejs'] === 'on') { //.js
                         page = escapeJS(data);
@@ -216,8 +211,12 @@ function RouteSetting(req, res) {
     }
 }
 
-function ejs_render(req, res, page, POST, GET, COOKIE, DEFINE) {
+function ejs_render(req, res, page) {
     try {
+        const POST = [];
+        const GET = request_get(url.parse(req.url, true).search);
+        const COOKIE = get_cookie(req.headers['cookie']);
+        const DEFINE = JSON.parse(fs.readFileSync('etc/define.json', 'UTF-8'));
         const response = res;
         if (req.method === 'POST') {
             let data = '';
