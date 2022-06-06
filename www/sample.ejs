@@ -8,19 +8,26 @@
 
 <body>
     <h1>Sample Ejs file</h1>
-    <main>
-        <div>DEFINE['example'] =
-            <%= DEFINE['example'] %>
-        </div>
-        <ul>
-            <% for(let i = 1; i <= 5; i++){ %>
-                <li>
-                    <%= DEFINE['example'] %>
-                        <%= i %>
-                </li>
-                <%} %>
-        </ul>
-    </main>
+    <% 
+        DEFINE['response'].setHeader('Set-Cookie', [`example1=hello world; expires=${new Date().toUTCString};max-age=60*30`, 
+            `example2=hello world; expires=${new Date().toUTCString};max-age=60*30`,
+            `example3=hello world; expires=${new Date().toUTCString};max-age=60*30`,
+        ]); 
+    %>
+        <main>
+            <div>DEFINE['example'] =
+                <%= DEFINE['example'] %>
+            </div>
+            <ul>
+                <% for(let i = 1; i <= 3; i++){ %>
+                    <li>
+                        <%= DEFINE['example'] %>
+                            <%= i %>
+                    </li>
+                    <%} %>
+            </ul>
+
+        </main>
 </body>
 
 </html>

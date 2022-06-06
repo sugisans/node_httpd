@@ -30,7 +30,7 @@ ENV value of ejs
 
         GET['name']
 
-        COOKIE['name']      response.setHeader('Set-Cookie', [`value; expires; max-age`]);
+        COOKIE['name']      DEFINE['response'].setHeader('Set-Cookie', [`value; expires; max-age`]);
 
         DEFINE['name']      ./etc/define.json
 

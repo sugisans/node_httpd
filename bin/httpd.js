@@ -70,7 +70,7 @@ for (let i = 2; i < process.argv.length; i += 2) {
     }
 }
 
-//cluster proecss
+//cluster process
 if (cluster.isMaster) {
     for (let i = 0; i < cpu.length; i++) {
         cluster.fork({ msg: `ID${i}` })
@@ -217,7 +217,7 @@ function ejs_render(req, res, page) {
         const GET = request_get(url.parse(req.url, true).search);
         const COOKIE = get_cookie(req.headers['cookie']);
         const DEFINE = JSON.parse(fs.readFileSync('etc/define.json', 'UTF-8'));
-        const response = res;
+        DEFINE['response'] = res;
         if (req.method === 'POST') {
             let data = '';
             req.on('data', function(chunk) {
@@ -230,13 +230,13 @@ function ejs_render(req, res, page) {
                         POST[key] = value;
                     });
                 }
-                page = ejs.render(page, { response, POST, GET, COOKIE, DEFINE });
+                page = ejs.render(page, { POST, GET, COOKIE, DEFINE });
                 res.writeHead(200, { 'Content-Type': 'text/html' });
                 res.write(page);
                 res.end();
             });
         } else { //GET
-            page = ejs.render(page, { response, POST, GET, COOKIE, DEFINE });
+            page = ejs.render(page, { POST, GET, COOKIE, DEFINE });
             res.writeHead(200, { 'Content-Type': 'text/html' });
             res.write(page);
             res.end();
