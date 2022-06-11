@@ -33,13 +33,13 @@ for (let i = 2; i < process.argv.length; i += 2) {
                 process.exit(0);
             }
             break;
-        case '-e':
-        case '--escapejs':
+        case '-d':
+        case '--dir':
             value = String(value);
-            if (value === 'on' || value === 'off') {
-                config['escapejs'] = value;
+            if (value) {
+                config['root_dir'] = value;
             } else {
-                console.log("escape value is on or off");
+                console.log("root directory value is not");
                 process.exit(0);
             }
             break;
@@ -63,6 +63,7 @@ for (let i = 2; i < process.argv.length; i += 2) {
         default:
             console.log(`${config['title']} httpd.js options`);
             console.log("-v, --version : version check");
+            console.log("-d, --dir : root directory path");
             console.log("-p, --port [80 or 443 or 1024-65535]");
             console.log("-e, --escapejs [escapejs validate is on or off]");
             console.log("-l, --log [log validate is on or off]");
