@@ -35,8 +35,8 @@ for (let i = 2; i < process.argv.length; i += 2) {
             break;
         case '-d':
         case '--dir':
-            value = String(value);
             if (value) {
+                value = String(value);
                 config['root_dir'] = value;
             } else {
                 console.log("root directory value is not");
