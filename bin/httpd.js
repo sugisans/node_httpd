@@ -139,18 +139,18 @@ function RouteSetting(req, res) {
     try {
         const urldata = url.parse(req.url, true);
         const extname = String(path.extname(urldata.pathname)).toLowerCase();
+        const ip = req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',', 2)[0] : req.socket['remoteAddress'];
+        const ua = req.headers['user-agent'];
+        const pid = process.pid;
+        const log_data = `${urldata.href} <= ${ip} ${ua} [PID=${pid}]\n`;
         let content_type = !extname ? 'text/html' : mime_type[extname] || 'text/plain';
         let encode = content_type.split('/', 2)[0] === 'text' ? 'UTF-8' : null;
         let file, page;
 
+        console.log(log_data);
         if (config['LOG']['status'] == 'on') {
-            const ip = req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',', 2)[0] : req.socket['remoteAddress'];
-            const ua = req.headers['user-agent'];
-            const log_data = `${urldata.href} <= ${ip} ${ua}\n`;
             fs.appendFile(log_file, log_data, function(err) {
-                if (err) {
-                    console.error("log write error");
-                }
+                if (err) console.error("log write error");
             });
         }
         if (urldata.pathname == '/') { //index
