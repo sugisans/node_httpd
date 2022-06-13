@@ -5,6 +5,7 @@
     "express-session": "^1.17.3",
     "fs": "^0.0.1-security",
     "http": "^0.0.1-security",
+    "http2": "^3.3.7",
     "https": "^1.0.0",
     "keypress": "^0.2.1",
     "os": "^0.1.2",

@@ -85,12 +85,12 @@ if (cluster.isMaster) {
 
     switch (port) {
         case 443:
-            const https = require('https');
             try {
                 const SSL_AUTH = {
                     "key": fs.readFileSync(config['ssl_key_file'], 'UTF-8'),
                     "cert": fs.readFileSync(config['ssl_cert_file'], 'UTF-8')
                 };
+                const https = require('https');
                 server = https.createServer(SSL_AUTH, RouteSetting);
             } catch (err) {
                 if (err.code === 'ENOENT') {
@@ -101,17 +101,21 @@ if (cluster.isMaster) {
                 process.exit(-1);
             }
         case 80:
-            if (uid != 0 || gid[0] != 0) {
-                console.error("Not permission\nPlease root uid or root gid");
-                process.exit(-1);
+            if (process.env.PORT) {
+                server.listen(process.env.PORT);
+            } else {
+                if (uid != 0 || gid[0] != 0) {
+                    console.error("Not permission\nPlease root uid or root gid");
+                    process.exit(-1);
+                }
+                if (!config['system_user']) {
+                    console.log("Warnings!! Don's exists system_user from config file");
+                }
+                server.listen(port, function() {
+                    process.setuid(config['system_user'] || 'www');
+                    console.log("root(0) -> child");
+                });
             }
-            if (!config['system_user']) {
-                console.log("Warnings!! Don's exists system_user from config file");
-            }
-            server.listen(port, function() {
-                process.setuid(config['system_user'] || 'www');
-                console.log("root(0) -> child");
-            });
             break;
         default:
             if (port < 1024 || port > 65535) {
@@ -128,7 +132,6 @@ if (cluster.isMaster) {
 
 cluster.on('exit', function(worker, code, signal) {
     console.log('Worker %d died with code/signal %s. Restarting worker...', worker.process.pid, signal || code);
-    cluster.fork();
 });
 
 //request
