@@ -79,10 +79,10 @@ if (cluster.isMaster) {
             .on("message", msg => console.log(msg));
     }
 } else {
-    let server = http.createServer(RouteSetting);
     const port = parseInt(config['port']);
     const uid = process.getuid();
     const gid = process.getgroups();
+    let server = http.createServer(RouteSetting);
 
     switch (port) {
         case 443:
@@ -128,7 +128,7 @@ if (cluster.isMaster) {
 
     const msg = process.env.msg;
     process.send(`from worker (${msg})`);
-    console.log(`PORT=${port}\n${config['title']} running!`);
+    console.log(`PORT=${process.env.PORT || port}\n${config['title']} running!`);
 }
 
 cluster.on('exit', function(worker, code, signal) {
