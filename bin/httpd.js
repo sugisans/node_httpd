@@ -1,10 +1,11 @@
-"use strict";
+'use strict';
+
 const http = require('http');
 const url = require('url');
 const fs = require('fs');
 const ejs = require('ejs');
 const path = require('path');
-const cluster = require("cluster");
+const cluster = require('cluster');
 const cpu = require('os').cpus();
 
 const configFile = fs.readFileSync('etc/config.json', 'UTF-8');
