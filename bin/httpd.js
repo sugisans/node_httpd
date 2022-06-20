@@ -8,17 +8,17 @@ const path = require('path');
 const cluster = require('cluster');
 const cpu = require('os').cpus();
 
-const configFile = fs.readFileSync('etc/config.json', 'UTF-8');
-const mimeFile = fs.readFileSync('etc/mime.json', 'UTF-8');
-const statusFile = fs.readFileSync('etc/status.json', 'UTF-8');
-const statusEjs = fs.readFileSync('etc/default_page/status.ejs', 'UTF-8');
-const indexEjs = fs.readFileSync('etc/default_page/index.ejs', 'UTF-8');
+const root_dir = path.join(__dirname, '../');
+const configFile = fs.readFileSync(root_dir + 'etc/config.json', 'UTF-8');
+const mimeFile = fs.readFileSync(root_dir + 'etc/mime.json', 'UTF-8');
+const statusFile = fs.readFileSync(root_dir + 'etc/status.json', 'UTF-8');
+const statusEjs = fs.readFileSync(root_dir + 'etc/default_page/status.ejs', 'UTF-8');
+const indexEjs = fs.readFileSync(root_dir + 'etc/default_page/index.ejs', 'UTF-8');
 
 //default config value
 let config = JSON.parse(configFile);
 const mime_type = JSON.parse(mimeFile);
 const status_code = JSON.parse(statusFile);
-const log_file = `${config['LOG']['dir']}/${config['LOG']['file']}`;
 
 //config option
 for (let i = 2; i < process.argv.length; i += 2) {
@@ -71,6 +71,11 @@ for (let i = 2; i < process.argv.length; i += 2) {
             process.exit(0);
     }
 }
+
+//full path
+if (!config['root_dir']) config['root_dir'] = root_dir + 'www';
+if (!config['LOG']['dir']) config['LOG']['dir'] = root_dir + 'log';
+const log_file = `${config['LOG']['dir']}/${config['LOG']['file']}`;
 
 //cluster process
 if (cluster.isMaster) {
@@ -221,7 +226,7 @@ function ejs_render(req, res, page) {
         const POST = [];
         const GET = request_get(url.parse(req.url, true).search);
         const COOKIE = get_cookie(req.headers['cookie']);
-        const DEFINE = JSON.parse(fs.readFileSync('etc/define.json', 'UTF-8'));
+        const DEFINE = JSON.parse(fs.readFileSync(root_dir + 'etc/define.json', 'UTF-8'));
         DEFINE['response'] = res;
         if (req.method === 'POST') {
             let data = '';
