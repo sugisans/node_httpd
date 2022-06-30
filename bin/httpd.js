@@ -118,8 +118,7 @@ if (cluster.isMaster) {
                     console.log("Warnings!! Don's exists system_user from config file");
                 }
                 server.listen(port, function() {
-                    process.setuid(config['system_user'] || 'www');
-                    console.log("root(0) -> child");
+                    process.setuid(config['system_user'] || 'root');
                 });
             }
             break;
