@@ -77,6 +77,17 @@ if (!config['root_dir']) config['root_dir'] = root_dir + 'www';
 if (!config['LOG']['dir']) config['LOG']['dir'] = root_dir + 'log';
 const log_file = `${config['LOG']['dir']}/${config['LOG']['file']}`;
 
+//header
+const header_source = {
+    'Pragma': 'no-cache',
+    'Cache-Control': 'no-cache'
+}
+if (config['CACHE']['status'] === "on") {
+    header_source['Pragma'] = 'chache';
+    header_source['Cache-Control'] = `max-age=${config['CACHE']['max_age']}`;
+    console.log(header_source['Cache-Control']);
+}
+
 //cluster process
 if (cluster.isMaster) {
     for (let i = 0; i < cpu.length; i++) {
@@ -207,7 +218,9 @@ function RouteSetting(req, res) {
                     content_type = 'text/html';
                     page = status_page(400);
                 }
-                res.writeHead(200, { 'Content-Type': content_type });
+
+                header_source['Content-Type'] = content_type;
+                res.writeHead(200, header_source);
                 res.write(page);
                 res.end();
             });
