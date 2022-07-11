@@ -1,0 +1,19 @@
+{
+    "title": "node http server",
+    "version": "v1.0",
+    "escapejs": "on",
+    "system_user": "",
+    "root_dir": "",
+    "ssl_key_file": "",
+    "ssl_cert_file": "",
+    "port": 3000,
+    "CACHE": {
+        "status": "on",
+        "max_age": 3600
+    },
+    "LOG": {
+        "status": "off",
+        "dir": "",
+        "file": "accesss.log"
+    }
+}
