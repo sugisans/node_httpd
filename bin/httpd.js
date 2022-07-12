@@ -19,6 +19,10 @@ const indexEjs = fs.readFileSync(root_dir + 'etc/default_page/index.ejs', 'UTF-8
 let config = JSON.parse(configFile);
 const mime_type = JSON.parse(mimeFile);
 const status_code = JSON.parse(statusFile);
+const header_source = {
+    'Pragma': 'no-cache',
+    'Cache-Control': 'no-cache'
+}
 
 //config option
 for (let i = 2; i < process.argv.length; i += 2) {
@@ -78,14 +82,9 @@ if (!config['LOG']['dir']) config['LOG']['dir'] = root_dir + 'log';
 const log_file = `${config['LOG']['dir']}/${config['LOG']['file']}`;
 
 //header
-const header_source = {
-    'Pragma': 'no-cache',
-    'Cache-Control': 'no-cache'
-}
 if (config['CACHE']['status'] === "on") {
     header_source['Pragma'] = 'chache';
     header_source['Cache-Control'] = `max-age=${config['CACHE']['max_age']}`;
-    console.log(header_source['Cache-Control']);
 }
 
 //cluster process
