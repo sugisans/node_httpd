@@ -1,0 +1,36 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+
+<head>
+    <title>Index of
+        <%= list['path'] %>
+    </title>
+</head>
+
+<body>
+    <h1>Index of
+        <%= list['path'] %>
+    </h1>
+
+    <table>
+        <tr>
+            <td><a href="/">Parent Directory</a></td>
+        </tr>
+
+        <% for(let file of list['files']) {%>
+            <tr>
+                <td>
+                    <a href="<%= file %>">
+                        <%= file %>
+                    </a>
+                </td>
+            </tr>
+            <% } %>
+
+    </table>
+
+    <hr>
+    <address>Node Httpd at <%= list['ip'] %> <%=list['host'] %></address>
+</body>
+
+</html>

@@ -14,6 +14,7 @@ const mimeFile = fs.readFileSync(root_dir + 'etc/mime.json', 'UTF-8');
 const statusFile = fs.readFileSync(root_dir + 'etc/status.json', 'UTF-8');
 const statusEjs = fs.readFileSync(root_dir + 'etc/default_page/status.ejs', 'UTF-8');
 const indexEjs = fs.readFileSync(root_dir + 'etc/default_page/index.ejs', 'UTF-8');
+const indexOfEjs = fs.readFileSync(root_dir + 'etc/default_page/indexof.ejs', 'UTF-8');
 
 //default config value
 let config = JSON.parse(configFile);
@@ -154,6 +155,7 @@ function RouteSetting(req, res) {
     try {
         const urldata = url.parse(req.url, true);
         const extname = String(path.extname(urldata.pathname)).toLowerCase();
+        const dir = String(config['root_dir'] + urldata.pathname);
         const ip = req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',', 2)[0] : req.socket['remoteAddress'];
         const ua = req.headers['user-agent'];
         const pid = process.pid;
@@ -168,38 +170,56 @@ function RouteSetting(req, res) {
                 if (err) console.error("log write error");
             });
         }
-        if (urldata.pathname == '/') { //index
+        if (urldata.pathname.slice(-1) == '/') { //dir
             let index = '';
-            fs.readdir(config['root_dir'], function(err, files) {
-                if (err) throw err;
-                for (let get of files) {
-                    if (get == 'index.ejs') {
-                        index = get;
-                        break;
-                    }
-                    if (get == 'index.html') {
-                        index = get;
-                    }
-                }
-                file = config['root_dir'] + urldata.pathname + index;
-                fs.readFile(String(file), encode, function(err, data) {
-                    if (!err) {
-                        if (index == 'index.ejs') {
-                            if (ejs_render(req, res, data)) return;
-                            page = status_page(400);
-                        } else {
-                            page = data;
+            fs.readdir(dir, function(err, files) {
+                if (!err) {
+                    for (let get of files) {
+                        if (get == 'index.ejs') {
+                            index = get;
+                            break;
                         }
-                    } else {
-                        page = ejs.render(indexEjs, { config });
+                        if (get == 'index.html') {
+                            index = get;
+                        }
                     }
+
+                    file = String(dir + index);
+                    fs.readFile(file, encode, function(err, data) {
+                        if (!err) {
+                            if (index == 'index.ejs') {
+                                if (ejs_render(req, res, data)) return;
+                                page = status_page(400);
+                            } else {
+                                page = data;
+                            }
+                        } else if (urldata.pathname == '/') { //top dir
+                            page = ejs.render(indexEjs, { config });
+                        } else if (config['indexof'] == 'on') { //index of
+                            const list = {
+                                "path": urldata.pathname,
+                                "ip": ip,
+                                "host": req.headers['host'],
+                                "files": files
+                            };
+                            page = ejs.render(indexOfEjs, { list });
+                        } else {
+                            page = status_page(403);
+                        }
+
+                        res.writeHead(200, { 'Content-Type': 'text/html' });
+                        res.write(page);
+                        res.end();
+                    });
+                } else { //not dir
+                    page = status_page(404);
                     res.writeHead(200, { 'Content-Type': 'text/html' });
                     res.write(page);
                     res.end();
-                });
+                }
             });
-        } else {
-            file = config['root_dir'] + urldata.pathname;
+        } else { //page file
+            file = dir;
             fs.readFile(String(file), encode, function(err, data) {
                 if (!err) {
                     if (content_type == 'text/html' && extname == '.ejs') { //.ejs

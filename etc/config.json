@@ -2,6 +2,7 @@
     "title": "node http server",
     "version": "v1.0",
     "escapejs": "on",
+    "indexof": "on",
     "system_user": "",
     "root_dir": "",
     "ssl_key_file": "",
