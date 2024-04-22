@@ -1,6 +1,6 @@
 {
     "title": "node http server",
-    "version": "v1.0",
+    "version": "v2.0",
     "escapejs": "on",
     "indexof": "on",
     "system_user": "",

@@ -202,7 +202,7 @@ function RouteSetting(req, res) {
                                 "host": req.headers['host'],
                                 "files": files
                             };
-                            page = ejs.render(indexOfEjs, { list });
+                            page = ejs.render(indexOfEjs, { config, list });
                         } else {
                             page = status_page(403);
                         }
