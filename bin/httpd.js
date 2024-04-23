@@ -189,7 +189,6 @@ function RouteSetting(req, res) {
                     file = String(dir + index);
                 }
 
-                console.log(file);
                 fs.readFile(file, encode, function(err, data) {
                     if (!err) {
                         if (index == 'index.ejs') {
