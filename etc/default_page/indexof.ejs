@@ -1,36 +1,43 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<html>
+<% 
+    let link = '';
+    if(list['path'].slice(-1) != '/'){
+        link = list['path'] + '/';
+    }
+%>
+    <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+    <html>
 
-<head>
-    <title>Index of
-        <%= list['path'] %>
-    </title>
-</head>
+    <head>
+        <title>Index of
+            <%= list['path'] %>
+        </title>
+    </head>
 
-<body>
-    <h1>Index of
-        <%= list['path'] %>
-    </h1>
+    <body>
+        <h1>Index of
+            <%= list['path'] %>
+        </h1>
 
-    <table>
-        <tr>
-            <td><a href="/">Parent Directory</a></td>
-        </tr>
-
-        <% for(let file of list['files']) {%>
+        <table>
             <tr>
-                <td>
-                    <a href="<%= file %>">
-                        <%= file %>
-                    </a>
-                </td>
+                <td><a href="/">Parent Directory</a></td>
             </tr>
-            <% } %>
 
-    </table>
+            <% for(let file of list['files']) {%>
+                <% let path = link + file; %>
+                    <tr>
+                        <td>
+                            <a href="<%= path %>">
+                                <%= file %>
+                            </a>
+                        </td>
+                    </tr>
+                    <% } %>
 
-    <hr>
-    <address>Node Httpd <%= config['version'] %> at <%= list['ip'] %> <%=list['host'] %></address>
-</body>
+        </table>
 
-</html>
+        <hr>
+        <address>Node Httpd <%= config['version'] %> at <%= list['ip'] %> <%=list['host'] %></address>
+    </body>
+
+    </html>

@@ -170,80 +170,79 @@ function RouteSetting(req, res) {
                 if (err) console.error("log write error");
             });
         }
-        if (urldata.pathname.slice(-1) == '/') { //dir
+
+        fs.readdir(dir, function(err, files) {
             let index = '';
-            fs.readdir(dir, function(err, files) {
-                if (!err) {
-                    for (let get of files) {
-                        if (get == 'index.ejs') {
-                            index = get;
-                            break;
+            if (!err) { //dir
+                for (let get of files) {
+                    if (get == 'index.ejs') {
+                        index = get;
+                        break;
+                    }
+                    if (get == 'index.html') {
+                        index = get;
+                    }
+                }
+                if (urldata.pathname.slice(-1) != '/') {
+                    file = String(dir + '/' + index);
+                } else {
+                    file = String(dir + index);
+                }
+
+                console.log(file);
+                fs.readFile(file, encode, function(err, data) {
+                    if (!err) {
+                        if (index == 'index.ejs') {
+                            if (ejs_render(req, res, data)) return;
+                            page = status_page(400);
+                        } else {
+                            page = data;
                         }
-                        if (get == 'index.html') {
-                            index = get;
-                        }
+                    } else if (urldata.pathname == '/') { //top dir
+                        page = ejs.render(indexEjs, { config });
+                    } else if (config['indexof'] == 'on') { //index of
+                        const list = {
+                            "path": urldata.pathname,
+                            "ip": ip,
+                            "host": req.headers['host'],
+                            "files": files
+                        };
+                        page = ejs.render(indexOfEjs, { config, list });
+                    } else {
+                        page = status_page(403);
                     }
 
-                    file = String(dir + index);
-                    fs.readFile(file, encode, function(err, data) {
-                        if (!err) {
-                            if (index == 'index.ejs') {
-                                if (ejs_render(req, res, data)) return;
-                                page = status_page(400);
-                            } else {
-                                page = data;
-                            }
-                        } else if (urldata.pathname == '/') { //top dir
-                            page = ejs.render(indexEjs, { config });
-                        } else if (config['indexof'] == 'on') { //index of
-                            const list = {
-                                "path": urldata.pathname,
-                                "ip": ip,
-                                "host": req.headers['host'],
-                                "files": files
-                            };
-                            page = ejs.render(indexOfEjs, { config, list });
-                        } else {
-                            page = status_page(403);
-                        }
-
-                        res.writeHead(200, { 'Content-Type': 'text/html' });
-                        res.write(page);
-                        res.end();
-                    });
-                } else { //not dir
-                    page = status_page(404);
                     res.writeHead(200, { 'Content-Type': 'text/html' });
                     res.write(page);
                     res.end();
-                }
-            });
-        } else { //page file
-            file = dir;
-            fs.readFile(String(file), encode, function(err, data) {
-                if (!err) {
-                    if (content_type == 'text/html' && extname == '.ejs') { //.ejs
-                        if (ejs_render(req, res, data)) return;
-                        page = status_page(400);
-                    } else if (content_type === 'text/javascript' && config['escapejs'] === 'on') { //.js
-                        page = escapeJS(data);
+                });
+            } else { //not dir
+                file = dir;
+                fs.readFile(String(file), encode, function(err, data) {
+                    if (!err) {
+                        if (content_type == 'text/html' && extname == '.ejs') { //.ejs
+                            if (ejs_render(req, res, data)) return;
+                            page = status_page(400);
+                        } else if (content_type === 'text/javascript' && config['escapejs'] === 'on') { //.js
+                            page = escapeJS(data);
+                        } else {
+                            page = data;
+                        }
+                    } else if (err.code === 'ENOENT') { //not page
+                        content_type = 'text/html';
+                        page = status_page(404);
                     } else {
-                        page = data;
+                        content_type = 'text/html';
+                        page = status_page(400);
                     }
-                } else if (err.code === 'ENOENT') { //not page
-                    content_type = 'text/html';
-                    page = status_page(404);
-                } else {
-                    content_type = 'text/html';
-                    page = status_page(400);
-                }
 
-                header_source['Content-Type'] = content_type;
-                res.writeHead(200, header_source);
-                res.write(page);
-                res.end();
-            });
-        }
+                    header_source['Content-Type'] = content_type;
+                    res.writeHead(200, header_source);
+                    res.write(page);
+                    res.end();
+                });
+            }
+        });
     } catch (e) {
         let error = `500 ${status_code['500']}\n${e.name}`;
         res.writeHead(500, { 'Content-Type': 'text/plain' });
