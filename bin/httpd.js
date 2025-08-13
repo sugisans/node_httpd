@@ -49,6 +49,16 @@ for (let i = 2; i < process.argv.length; i += 2) {
                 process.exit(0);
             }
             break;
+        case '-b':
+        case '--basic':
+            value = String(value);
+            if (value === 'on' || value === 'off') {
+                config['BASIC']['status'] = value;
+            } else {
+                console.log("basic auth status value is on or off");
+                process.exit(0);
+            }
+            break;
         case '-l':
         case '--log':
             value = String(value);
@@ -71,6 +81,7 @@ for (let i = 2; i < process.argv.length; i += 2) {
             console.log("-v, --version : version check");
             console.log("-d, --dir : root directory path");
             console.log("-p, --port [80 or 443 or 1024-65535]");
+            console.log("-b, --basic [basic auth is on or off]");
             console.log("-e, --escapejs [escapejs validate is on or off]");
             console.log("-l, --log [log validate is on or off]");
             process.exit(0);
@@ -80,7 +91,10 @@ for (let i = 2; i < process.argv.length; i += 2) {
 //full path
 if (!config['root_dir']) config['root_dir'] = root_dir + 'www';
 if (!config['LOG']['dir']) config['LOG']['dir'] = root_dir + 'log';
+if (!config['BASIC']['dir']) config['BASIC']['dir'] = root_dir + 'etc';
 const log_file = `${config['LOG']['dir']}/${config['LOG']['file']}`;
+const basic_file = `${config['BASIC']['dir']}/${config['BASIC']['file']}`;
+console.log(basic_file);
 
 //header
 if (config['CACHE']['status'] === "on") {
@@ -98,8 +112,20 @@ if (cluster.isMaster) {
     const port = parseInt(config['port']);
     const uid = process.getuid();
     const gid = process.getgroups();
-    let server = http.createServer(RouteSetting);
 
+    let Exec　= RouteSetting;
+    if(config['BASIC']['status'] === "on"){
+        const auth = require('http-auth');
+        const basic = auth.basic({
+            realm: 'Enter username and password.',
+            file: basic_file
+        }); 
+        Exec = basic.check(function(req, res){
+                RouteSetting(req, res);
+        });
+    }
+
+    let server = http.createServer(Exec);
     switch (port) {
         case 443:
             try {
@@ -108,7 +134,7 @@ if (cluster.isMaster) {
                     "cert": fs.readFileSync(config['ssl_cert_file'], 'UTF-8')
                 };
                 const https = require('https');
-                server = https.createServer(SSL_AUTH, RouteSetting);
+                server = https.createServer(SSL_AUTH, Exec);
             } catch (err) {
                 if (err.code === 'ENOENT') {
                     console.error("Can't read ssl files");
