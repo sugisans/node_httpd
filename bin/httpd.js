@@ -94,7 +94,6 @@ if (!config['LOG']['dir']) config['LOG']['dir'] = root_dir + 'log';
 if (!config['BASIC']['dir']) config['BASIC']['dir'] = root_dir + 'etc';
 const log_file = `${config['LOG']['dir']}/${config['LOG']['file']}`;
 const basic_file = `${config['BASIC']['dir']}/${config['BASIC']['file']}`;
-console.log(basic_file);
 
 //header
 if (config['CACHE']['status'] === "on") {

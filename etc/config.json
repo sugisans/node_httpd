@@ -17,7 +17,7 @@
         "dir": "",
         "file": "accesss.log"
     },
-     "BASIC": {
+    "BASIC": {
         "status": "off",
         "dir": "",
         "file": "basic.auth"
