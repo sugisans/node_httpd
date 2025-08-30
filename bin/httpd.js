@@ -69,6 +69,16 @@ for (let i = 2; i < process.argv.length; i += 2) {
                 process.exit(0);
             }
             break;
+        case '-i':
+        case '--indexof':
+            value = String(value);
+            if (value === 'on' || value === 'off') {
+                config['indexof'] = value; 
+            } else {
+                console.log("indexof status value is on or off");
+                process.exit(0);
+            }
+            break;   
         case '-e':
         case '--escapejs':
             value = String(value);
@@ -85,10 +95,9 @@ for (let i = 2; i < process.argv.length; i += 2) {
             if(value === 'config'){
                 console.log(JSON.stringify(config, null, '  '));
             }else if(value === 'define'){
-                const DEFINE = JSON.parse(fs.readFileSync(root_dir + 'etc/define.json', 'UTF-8'));
-                console.log(JSON.stringify(DEFINE, null, '  '));
+                console.log(JSON.stringify(JSON.parse(fs.readFileSync(root_dir + 'etc/define.json', 'UTF-8'), null, '  ')));
             }else{
-                console.log("show value is config or define");
+                console.log("show value is config, define, log");
             }
             process.exit(0);   
         case '-v':
@@ -105,8 +114,9 @@ for (let i = 2; i < process.argv.length; i += 2) {
             console.log("-p, --port [80 or 443 or 1024-65535]");
             console.log("-b, --basic [basic auth is on or off]");
             console.log("-e, --escapejs [escapejs validate is on or off]");
+            console.log("-i, --indexof [idexof validate is on or off]");
             console.log("-l, --log [log validate is on or off]");
-            console.log("-s, --show [config or define]");
+            console.log("-s, --show [config, define, log]");
             console.log("-v, --version : version check");
             process.exit(0);
     }
