@@ -97,7 +97,7 @@ for (let i = 2; i < process.argv.length; i += 2) {
             }else if(value === 'define'){
                 console.log(JSON.stringify(JSON.parse(fs.readFileSync(root_dir + 'etc/define.json', 'UTF-8'), null, '  ')));
             }else{
-                console.log("show value is config, define, log");
+                console.log("show value is config, define");
             }
             process.exit(0);   
         case '-v':
@@ -116,7 +116,7 @@ for (let i = 2; i < process.argv.length; i += 2) {
             console.log("-e, --escapejs [escapejs validate is on or off]");
             console.log("-i, --indexof [idexof validate is on or off]");
             console.log("-l, --log [log validate is on or off]");
-            console.log("-s, --show [config, define, log]");
+            console.log("-s, --show [config, define]");
             console.log("-v, --version : version check");
             process.exit(0);
     }
