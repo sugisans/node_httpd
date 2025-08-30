@@ -25,6 +25,8 @@ const header_source = {
     'Cache-Control': 'no-cache'
 }
 
+const os = process.platform;
+
 //config option
 for (let i = 2; i < process.argv.length; i += 2) {
     let value = process.argv[i + 1];
@@ -202,7 +204,7 @@ if (cluster.isMaster) {
 
     const msg = process.env.msg;
     process.send(`from worker (${msg})`);
-    console.log(`PORT=${process.env.PORT || port}\n${config['title']} running!`);
+    console.log(`PORT=${process.env.PORT || port}\n${config['title']} (${os}) running!`);
 }
 
 cluster.on('exit', function(worker, code, signal) {
@@ -218,7 +220,8 @@ function RouteSetting(req, res) {
         const ip = req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',', 2)[0] : req.socket['remoteAddress'];
         const ua = req.headers['user-agent'];
         const pid = process.pid;
-        const log_data = `${urldata.href} <= ${ip} ${ua} [PID=${pid}]\n`;
+        const time = new Date().toISOString();
+        const log_data = `[${time}] ${urldata.href} <= ${ip} ${ua} PID=${pid}\n`;
         let content_type = !extname ? 'text/html' : mime_type[extname] || 'text/plain';
         let encode = content_type.split('/', 2)[0] === 'text' ? 'UTF-8' : null;
         let file, page;
@@ -261,7 +264,7 @@ function RouteSetting(req, res) {
                     } else if (config['indexof'] == 'on') { //index of
                         const list = {
                             "path": urldata.pathname,
-                            "ip": ip,
+                            "os": os,
                             "host": req.headers['host'],
                             "files": files
                         };
