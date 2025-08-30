@@ -69,21 +69,45 @@ for (let i = 2; i < process.argv.length; i += 2) {
                 process.exit(0);
             }
             break;
+        case '-e':
+        case '--escapejs':
+            value = String(value);
+            if (value === 'on' || value === 'off') {
+                config['escapejs'] = value; 
+            } else {
+                console.log("escapejs status value is on or off");
+                process.exit(0);
+            }
+            break;        
+        case '-s':
+        case '--show':
+            value = String(value);
+            if(value === 'config'){
+                console.log(JSON.stringify(config, null, '  '));
+            }else if(value === 'define'){
+                const DEFINE = JSON.parse(fs.readFileSync(root_dir + 'etc/define.json', 'UTF-8'));
+                console.log(JSON.stringify(DEFINE, null, '  '));
+            }else{
+                console.log("show value is config or define");
+            }
+            process.exit(0);   
         case '-v':
         case '--version':
             if (config['version']) {
                 console.log(config['version']);
-                process.exit(0);
+            }else{
+                console.log("version is not");
             }
-            break;
+            process.exit(0);
         default:
             console.log(`${config['title']} httpd.js options`);
-            console.log("-v, --version : version check");
             console.log("-d, --dir : root directory path");
             console.log("-p, --port [80 or 443 or 1024-65535]");
             console.log("-b, --basic [basic auth is on or off]");
             console.log("-e, --escapejs [escapejs validate is on or off]");
             console.log("-l, --log [log validate is on or off]");
+            console.log("-s, --show [config or define]");
+            console.log("-v, --version : version check");
             process.exit(0);
     }
 }
