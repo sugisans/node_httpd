@@ -148,7 +148,7 @@ if (cluster.isMaster) {
     const uid = process.getuid();
     const gid = process.getgroups();
 
-    let Exec　= RouteSetting;
+    let Exec = RouteSetting;
     if(config['BASIC']['status'] === "on"){
         const auth = require('http-auth');
         const basic = auth.basic({
@@ -210,6 +210,7 @@ if (cluster.isMaster) {
 
 cluster.on('exit', function(worker, code, signal) {
     console.log('Worker %d died with code/signal %s. Restarting worker...', worker.process.pid, signal || code);
+    cluster.fork();
 });
 
 //request
@@ -227,11 +228,12 @@ function RouteSetting(req, res) {
         let encode = content_type.split('/', 2)[0] === 'text' ? 'UTF-8' : null;
         let file, page;
 
-        console.log(log_data);
         if (config['LOG']['status'] == 'on') {
             fs.appendFile(log_file, log_data, function(err) {
                 if (err) console.error("log write error");
             });
+        }else{
+            console.log(log_data);
         }
 
         fs.readdir(dir, function(err, files) {
@@ -409,8 +411,16 @@ function status_page(code) {
     return null;
 }
 
-function escapeJS(e) {
-    return e.replace(/^\/\/.*|\s\/\/.*/g, "")
-        .replace(/  /g, "")
-        .replace(/\n/g, "");
+function escapeJS(code) {
+    try {
+        code = code.replace(/\/\*[\s\S]*?\*\//g, "");
+        code = code.replace(/(^|[^:])\/\/.*$/gm, "$1");
+        code = code.replace(/\s{2,}/g, " ")  
+                   .replace(/\n\s*/g, "");  
+
+        return code.trim();
+    } catch (err) {
+        console.error("escapeJS error:", err);
+        return code; 
+    }
 }

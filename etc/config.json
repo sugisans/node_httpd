@@ -20,7 +20,7 @@
     "BASIC": {
         "status": "off",
         "dir": "",
-        "file": "basic.auth"
+        "file": ".htaccess"
     },
     "VIRTUAL": {
         "localhost": {
