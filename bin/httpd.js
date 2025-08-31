@@ -45,7 +45,7 @@ for (let i = 2; i < process.argv.length; i += 2) {
         case '--dir':
             if (value) {
                 value = String(value);
-                config['root_dir'] = value;
+                config['document_root'] = value;
             } else {
                 console.log("root directory value is not");
                 process.exit(0);
@@ -125,7 +125,7 @@ for (let i = 2; i < process.argv.length; i += 2) {
 }
 
 //full path
-if (!config['root_dir']) config['root_dir'] = root_dir + 'www';
+if (!config['document_root']) config['document_root'] = root_dir + 'www';
 if (!config['LOG']['dir']) config['LOG']['dir'] = root_dir + 'log';
 if (!config['BASIC']['dir']) config['BASIC']['dir'] = root_dir + 'etc';
 const log_file = `${config['LOG']['dir']}/${config['LOG']['file']}`;
@@ -161,6 +161,7 @@ if (cluster.isMaster) {
     }
 
     let server = http.createServer(Exec);
+
     switch (port) {
         case 443:
             try {
@@ -216,12 +217,12 @@ function RouteSetting(req, res) {
     try {
         const urldata = url.parse(req.url, true);
         const extname = String(path.extname(urldata.pathname)).toLowerCase();
-        const dir = String(config['root_dir'] + urldata.pathname);
+        const dir = get_directory(req, urldata.pathname);
         const ip = req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',', 2)[0] : req.socket['remoteAddress'];
         const ua = req.headers['user-agent'];
         const pid = process.pid;
         const time = new Date().toISOString();
-        const log_data = `[${time}] ${urldata.href} <= ${ip} ${ua} PID=${pid}\n`;
+        const log_data = `[${time}] ${req.headers['host']} ${dir} <= ${ip} ${ua} PID=${pid}\n`;
         let content_type = !extname ? 'text/html' : mime_type[extname] || 'text/plain';
         let encode = content_type.split('/', 2)[0] === 'text' ? 'UTF-8' : null;
         let file, page;
@@ -260,7 +261,7 @@ function RouteSetting(req, res) {
                             page = data;
                         }
                     } else if (urldata.pathname == '/') { //top dir
-                        page = ejs.render(indexEjs, { config });
+                        page = ejs.render(indexEjs, { config, dir });
                     } else if (config['indexof'] == 'on') { //index of
                         const list = {
                             "path": urldata.pathname,
@@ -310,6 +311,15 @@ function RouteSetting(req, res) {
         res.end(error);
         console.error(error);
     }
+}
+
+function get_directory(req, path){
+    const domain = req.headers['host'].split(':', 2)[0];
+    const directory = config['VIRTUAL'][domain]['document_root'] ? String(config['VIRTUAL'][domain]['document_root']) : "";
+    if(fs.existsSync(directory)){
+        return String(directory + path);
+    }
+    return String(config['document_root'] + path);
 }
 
 function ejs_render(req, res, page) {

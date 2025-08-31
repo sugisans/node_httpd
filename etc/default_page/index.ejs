@@ -26,15 +26,15 @@
         <pre>
             Port number = <%= config['port'] %>
             Setting file = ./etc/config.json
-            Top directory = <%= config['root_dir'] %>
+            Document root = <%= dir %>
             View files are html or ejs
 
             Examples
-                <%= config['root_dir'] %>/example.html
-                <%= config['root_dir'] %>/example.ejs
-                <%= config['root_dir'] %>/css/example.css
-                <%= config['root_dir'] %>/js/example.js
-                <%= config['root_dir'] %>/img/example.jpg
+                <%= dir %>example.html
+                <%= dir %>example.ejs
+                <%= dir %>css/example.css
+                <%= dir %>js/example.js
+                <%= dir %>img/example.jpg
 
             ENV value of ejs
                 POST['name']
