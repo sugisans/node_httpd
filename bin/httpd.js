@@ -226,8 +226,7 @@ function RouteSetting(req, res) {
         const log_data = `[${time}] ${req.headers['host']} ${dir} <= ${ip} ${ua} PID=${pid}\n`;
         let content_type = !extname ? 'text/html' : mime_type[extname] || 'text/plain';
         let encode = content_type.split('/', 2)[0] === 'text' ? 'UTF-8' : null;
-        let file, page;
-
+        
         if (config['LOG']['status'] == 'on') {
             fs.appendFile(log_file, log_data, function(err) {
                 if (err) console.error("log write error");
@@ -235,9 +234,11 @@ function RouteSetting(req, res) {
         }else{
             console.log(log_data);
         }
-
+        
         fs.readdir(dir, function(err, files) {
+            let file, page;
             let index = '';
+            let code = 200;
             if (!err) { //dir
                 for (let get of files) {
                     if (get == 'index.ejs') {
@@ -258,7 +259,8 @@ function RouteSetting(req, res) {
                     if (!err) {
                         if (index == 'index.ejs') {
                             if (ejs_render(req, res, data)) return;
-                            page = status_page(400);
+                            code = 400;
+                            page = status_page(code);
                         } else {
                             page = data;
                         }
@@ -273,12 +275,12 @@ function RouteSetting(req, res) {
                         };
                         page = ejs.render(indexOfEjs, { config, list });
                     } else {
-                        page = status_page(403);
+                        code = 403;
+                        page = status_page(code);
                     }
 
-                    res.writeHead(200, { 'Content-Type': 'text/html' });
-                    res.write(page);
-                    res.end();
+                    res.writeHead(code, { 'Content-Type': 'text/html' });
+                    res.end(page);
                 });
             } else { //not dir
                 file = dir;
@@ -286,7 +288,8 @@ function RouteSetting(req, res) {
                     if (!err) {
                         if (content_type == 'text/html' && extname == '.ejs') { //.ejs
                             if (ejs_render(req, res, data)) return;
-                            page = status_page(400);
+                            code = 400
+                            page = status_page(code);
                         } else if (content_type === 'text/javascript' && config['escapejs'] === 'on') { //.js
                             page = escapeJS(data);
                         } else {
@@ -294,16 +297,17 @@ function RouteSetting(req, res) {
                         }
                     } else if (err.code === 'ENOENT') { //not page
                         content_type = 'text/html';
-                        page = status_page(404);
+                        code = 404;
+                        page = status_page(code);
                     } else {
                         content_type = 'text/html';
-                        page = status_page(400);
+                        code = 400;
+                        page = status_page(code);
                     }
 
                     header_source['Content-Type'] = content_type;
-                    res.writeHead(200, header_source);
-                    res.write(page);
-                    res.end();
+                    res.writeHead(code, header_source);
+                    res.end(page);
                 });
             }
         });
@@ -325,34 +329,41 @@ function get_directory(req, path){
 }
 
 function ejs_render(req, res, page) {
-    try {
+   try {
         const POST = [];
         const GET = request_get(url.parse(req.url, true).search);
         const COOKIE = get_cookie(req.headers['cookie']);
         const DEFINE = JSON.parse(fs.readFileSync(root_dir + 'etc/define.json', 'UTF-8'));
+        const SECURE = config['escapehtml'] && config['escapehtml'] === 'on';
         DEFINE['response'] = res;
+        
+        const locals = {
+            POST: SECURE ? sanitizeObject(POST) : POST,
+            GET: SECURE ? sanitizeObject(GET) : GET,
+            COOKIE: SECURE ? sanitizeObject(COOKIE) : COOKIE,
+            DEFINE,
+            escapeHTML
+        };
+
         if (req.method === 'POST') {
             let data = '';
-            req.on('data', function(chunk) {
-                data += chunk;
-            }).on('end', function() {
-                if (data) {
-                    decodeURIComponent(data).split('&').forEach(function(out) {
-                        let key = out.split('=')[0].trim();
-                        let value = out.split('=')[1].replace(/\+/g, ' ').trim();
-                        POST[key] = value;
-                    });
-                }
-                page = ejs.render(page, { POST, GET, COOKIE, DEFINE });
-                res.writeHead(200, { 'Content-Type': 'text/html' });
-                res.write(page);
-                res.end();
-            });
-        } else { //GET
-            page = ejs.render(page, { POST, GET, COOKIE, DEFINE });
+            req.on('data', chunk => data += chunk)
+            .on('end', () => {
+                    if (data) {
+                        decodeURIComponent(data).split('&').forEach(out => {
+                            let key = out.split('=')[0].trim();
+                            let value = out.split('=')[1].replace(/\+/g, ' ').trim();
+                            POST[key] = value;
+                        });
+                    }
+                    page = ejs.render(page, locals);
+                    res.writeHead(200, { 'Content-Type': 'text/html' });
+                    res.end(page);
+                });
+        } else {
+            page = ejs.render(page, locals);
             res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.write(page);
-            res.end();
+            res.end(page);
         }
         return true;
     } catch (e) {
@@ -411,13 +422,31 @@ function status_page(code) {
     return null;
 }
 
+function sanitizeObject(obj) {
+    const out = {};
+    for (let key in obj) {
+        out[key] = escapeHTML(obj[key]);
+    }
+    return out;
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 function escapeJS(code) {
     try {
         code = code.replace(/\/\*[\s\S]*?\*\//g, "");
         code = code.replace(/(^|[^:])\/\/.*$/gm, "$1");
         code = code.replace(/\s{2,}/g, " ")  
-                   .replace(/\n\s*/g, "");  
-
+        .replace(/\n\s*/g, "");  
+        
         return code.trim();
     } catch (err) {
         console.error("escapeJS error:", err);
