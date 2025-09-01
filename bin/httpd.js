@@ -20,11 +20,6 @@ const indexOfEjs = fs.readFileSync(root_dir + 'etc/default_page/indexof.ejs', 'U
 let config = JSON.parse(configFile);
 const mime_type = JSON.parse(mimeFile);
 const status_code = JSON.parse(statusFile);
-const header_source = {
-    'Pragma': 'no-cache',
-    'Cache-Control': 'no-cache'
-}
-
 const os = process.platform;
 
 //config option
@@ -131,12 +126,6 @@ if (!config['BASIC']['dir']) config['BASIC']['dir'] = root_dir + 'etc';
 const log_file = `${config['LOG']['dir']}/${config['LOG']['file']}`;
 const basic_file = `${config['BASIC']['dir']}/${config['BASIC']['file']}`;
 
-//header
-if (config['CACHE']['status'] === "on") {
-    header_source['Pragma'] = 'chache';
-    header_source['Cache-Control'] = `max-age=${config['CACHE']['max_age']}`;
-}
-
 //cluster process
 if (cluster.isMaster) {
     for (let i = 0; i < cpu.length; i++) {
@@ -216,6 +205,10 @@ cluster.on('exit', function(worker, code, signal) {
 //request
 function RouteSetting(req, res) {
     try {
+        const header_source = {
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache'
+        }
         const urldata = url.parse(req.url, true);
         const extname = String(path.extname(urldata.pathname)).toLowerCase();
         const dir = get_directory(req, urldata.pathname);
@@ -226,8 +219,13 @@ function RouteSetting(req, res) {
         const log_data = `[${time}] ${req.headers['host']} ${dir} <= ${ip} ${ua} PID=${pid}\n`;
         let content_type = !extname ? 'text/html' : mime_type[extname] || 'text/plain';
         let encode = content_type.split('/', 2)[0] === 'text' ? 'UTF-8' : null;
-        
-        if (config['LOG']['status'] == 'on') {
+
+        if (config['CACHE']['status'] === "on") {
+            header_source['Pragma'] = 'chache';
+            header_source['Cache-Control'] = `max-age=${config['CACHE']['max_age']}`;
+        }
+
+        if (config['LOG']['status'] === "on") {
             fs.appendFile(log_file, log_data, function(err) {
                 if (err) console.error("log write error");
             });
@@ -319,13 +317,23 @@ function RouteSetting(req, res) {
     }
 }
 
-function get_directory(req, path){
-    const domain = req.headers['host'].split(':', 2)[0];
-    const directory = config['VIRTUAL'][domain]['document_root'] ? String(config['VIRTUAL'][domain]['document_root']) : "";
-    if(fs.existsSync(directory)){
-        return String(directory + path);
+function get_directory(req, pathname){
+    try{
+        let result = "";
+        const domain = req.headers['host'].split(':', 2)[0];
+        const root = config['VIRTUAL'] && config['VIRTUAL'][domain]['document_root'] ? String(config['VIRTUAL'][domain]['document_root']) : String(config['document_root']);
+        if(fs.existsSync(root)){
+            const fullpath = path.join(root, path.normalize(pathname));
+            const relative = path.relative(root, fullpath);
+            if (!relative.startsWith("..") && !path.isAbsolute(relative)) {
+                result = fullpath;
+            }
+        }
+        return result;
+    }catch(e){
+        console.error(e.name);
+        return null;
     }
-    return String(config['document_root'] + path);
 }
 
 function ejs_render(req, res, page) {
