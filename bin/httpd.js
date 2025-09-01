@@ -288,7 +288,7 @@ function RouteSetting(req, res) {
                     if (!err) {
                         if (content_type == 'text/html' && extname == '.ejs') { //.ejs
                             if (ejs_render(req, res, data)) return;
-                            code = 400
+                            code = 400;
                             page = status_page(code);
                         } else if (content_type === 'text/javascript' && config['escapejs'] === 'on') { //.js
                             page = escapeJS(data);
