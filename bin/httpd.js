@@ -282,7 +282,7 @@ function RouteSetting(req, res) {
                 });
             } else { //not dir
                 file = dir;
-                fs.readFile(String(file), encode, function(err, data) {
+                fs.readFile(file, encode, function(err, data) {
                     if (!err) {
                         if (content_type == 'text/html' && extname == '.ejs') { //.ejs
                             if (ejs_render(req, res, data)) return;
@@ -310,10 +310,10 @@ function RouteSetting(req, res) {
             }
         });
     } catch (e) {
-        let error = `500 ${status_code['500']}\n${e.name}`;
+        let error = `500 ${status_code['500']}`;
         res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end(error);
-        console.error(error);
+        console.error(e.name);
     }
 }
 
@@ -326,7 +326,7 @@ function get_directory(req, pathname){
             const fullpath = path.join(root, path.normalize(pathname));
             const relative = path.relative(root, fullpath);
             if (!relative.startsWith("..") && !path.isAbsolute(relative)) {
-                result = fullpath;
+                result = String(fullpath);
             }
         }
         return result;
