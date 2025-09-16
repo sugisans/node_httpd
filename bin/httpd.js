@@ -331,7 +331,7 @@ function get_directory(req, pathname){
         }
         return result;
     }catch(e){
-        console.error(e.name);
+        console.error(e.name + "=get directory error");
         return null;
     }
 }
@@ -357,12 +357,17 @@ function ejs_render(req, res, page) {
             let data = '';
             req.on('data', chunk => data += chunk)
             .on('end', () => {
-                    if (data) {
+                    if(req.headers['content-type'] && req.headers['content-type'].indexOf('application/x-www-form-urlencoded') !== -1){
                         decodeURIComponent(data).split('&').forEach(out => {
                             let key = out.split('=')[0].trim();
                             let value = out.split('=')[1].replace(/\+/g, ' ').trim();
                             POST[key] = value;
                         });
+                    }else if(req.headers['content-type'] && req.headers['content-type'].indexOf('application/json') !== -1){
+                        const json = JSON.parse(data);
+                        for(let key in json){
+                            POST[key] = json[key];
+                        }
                     }
                     page = ejs.render(page, locals);
                     res.writeHead(200, { 'Content-Type': 'text/html' });
