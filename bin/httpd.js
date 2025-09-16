@@ -357,6 +357,7 @@ function ejs_render(req, res, page) {
             let data = '';
             req.on('data', chunk => data += chunk)
             .on('end', () => {
+                if(data){
                     if(req.headers['content-type'] && req.headers['content-type'].indexOf('application/x-www-form-urlencoded') !== -1){
                         decodeURIComponent(data).split('&').forEach(out => {
                             let key = out.split('=')[0].trim();
@@ -369,10 +370,12 @@ function ejs_render(req, res, page) {
                             POST[key] = json[key];
                         }
                     }
-                    page = ejs.render(page, locals);
-                    res.writeHead(200, { 'Content-Type': 'text/html' });
-                    res.end(page);
-                });
+                }
+
+                page = ejs.render(page, locals);
+                res.writeHead(200, { 'Content-Type': 'text/html' });
+                res.end(page);
+            });
         } else {
             page = ejs.render(page, locals);
             res.writeHead(200, { 'Content-Type': 'text/html' });
