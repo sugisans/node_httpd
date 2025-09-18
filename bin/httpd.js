@@ -21,6 +21,10 @@ let config = JSON.parse(configFile);
 const mime_type = JSON.parse(mimeFile);
 const status_code = JSON.parse(statusFile);
 const os = process.platform;
+const header_source = {
+    'Pragma': 'no-cache',
+    'Cache-Control': 'no-cache'
+}
 
 //config option
 for (let i = 2; i < process.argv.length; i += 2) {
@@ -205,10 +209,6 @@ cluster.on('exit', function(worker, code, signal) {
 //request
 function RouteSetting(req, res) {
     try {
-        const header_source = {
-            'Pragma': 'no-cache',
-            'Cache-Control': 'no-cache'
-        }
         const urldata = url.parse(req.url, true);
         const extname = String(path.extname(urldata.pathname)).toLowerCase();
         const dir = get_directory(req, urldata.pathname);
@@ -357,14 +357,14 @@ function ejs_render(req, res, page) {
             let data = '';
             req.on('data', chunk => data += chunk)
             .on('end', () => {
-                if(data){
-                    if(req.headers['content-type'] && req.headers['content-type'].indexOf('application/x-www-form-urlencoded') !== -1){
+                if(data && req.headers['content-type']){
+                    if(req.headers['content-type'].indexOf('application/x-www-form-urlencoded') !== -1){
                         decodeURIComponent(data).split('&').forEach(out => {
                             let key = out.split('=')[0].trim();
                             let value = out.split('=')[1].replace(/\+/g, ' ').trim();
                             POST[key] = value;
                         });
-                    }else if(req.headers['content-type'] && req.headers['content-type'].indexOf('application/json') !== -1){
+                    }else if(req.headers['content-type'].indexOf('application/json') !== -1){
                         const json = JSON.parse(data);
                         for(let key in json){
                             POST[key] = json[key];
