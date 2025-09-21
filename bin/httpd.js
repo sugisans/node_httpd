@@ -205,10 +205,6 @@ cluster.on('exit', function(worker, code, signal) {
 //request
 function RouteSetting(req, res) {
     try {
-        const header_source = {
-            'Pragma': 'no-cache',
-            'Cache-Control': 'no-cache'
-        }
         const urldata = url.parse(req.url, true);
         const extname = String(path.extname(urldata.pathname)).toLowerCase();
         const dir = get_directory(req, urldata.pathname);
@@ -219,10 +215,12 @@ function RouteSetting(req, res) {
         const log_data = `[${time}] ${req.headers['host']} ${dir} <= ${ip} ${ua} PID=${pid}\n`;
         let content_type = !extname ? 'text/html' : mime_type[extname] || 'text/plain';
         let encode = content_type.split('/', 2)[0] === 'text' ? 'UTF-8' : null;
-
+        
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Cache-Control','no-cache');
         if (config['CACHE']['status'] === "on") {
-            header_source['Pragma'] = 'chache';
-            header_source['Cache-Control'] = `max-age=${config['CACHE']['max_age']}`;
+            res.setHeader('Pragma', 'cache');
+            res.setHeader('Cache-Control', `max-age=${config['CACHE']['max_age']}`)
         }
 
         if (config['LOG']['status'] === "on") {
@@ -256,7 +254,7 @@ function RouteSetting(req, res) {
                 fs.readFile(file, encode, function(err, data) {
                     if (!err) {
                         if (index == 'index.ejs') {
-                            if (ejs_render(req, res, data, header_source)) return;
+                            if (ejs_render(req, res, data)) return;
                             code = 400;
                             page = status_page(code);
                         } else {
@@ -277,8 +275,7 @@ function RouteSetting(req, res) {
                         page = status_page(code);
                     }
 
-                    header_source['Content-Type'] = 'text/html';
-                    res.writeHead(code, header_source);
+                    res.writeHead(code, {'Content-Type': 'text/html'});
                     res.end(page);
                 });
             } else { //not dir
@@ -286,7 +283,7 @@ function RouteSetting(req, res) {
                 fs.readFile(file, encode, function(err, data) {
                     if (!err) {
                         if (content_type == 'text/html' && extname == '.ejs') { //.ejs
-                            if (ejs_render(req, res, data, header_source)) return;
+                            if (ejs_render(req, res, data)) return;
                             code = 400;
                             page = status_page(code);
                         } else if (content_type === 'text/javascript' && config['escapejs'] === 'on') { //.js
@@ -304,8 +301,7 @@ function RouteSetting(req, res) {
                         page = status_page(code);
                     }
 
-                    header_source['Content-Type'] = content_type;
-                    res.writeHead(code, header_source);
+                    res.writeHead(code, {'Content-Type': content_type});
                     res.end(page);
                 });
             }
@@ -337,7 +333,7 @@ function get_directory(req, pathname){
     }
 }
 
-function ejs_render(req, res, page, HEADER) {
+function ejs_render(req, res, page) {
    try {
         const POST = [];
         const GET = request_get(url.parse(req.url, true).search);
@@ -345,14 +341,12 @@ function ejs_render(req, res, page, HEADER) {
         const DEFINE = JSON.parse(fs.readFileSync(root_dir + 'etc/define.json', 'UTF-8'));
         const SECURE = config['escapehtml'] && config['escapehtml'] === 'on';
         DEFINE['response'] = res;
-        HEADER['Content-Type'] = 'text/html';
         
         const locals = {
             POST: SECURE ? sanitizeObject(POST) : POST,
             GET: SECURE ? sanitizeObject(GET) : GET,
             COOKIE: SECURE ? sanitizeObject(COOKIE) : COOKIE,
-            DEFINE,
-            escapeHTML
+            DEFINE
         };
 
         if (req.method === 'POST') {
@@ -375,12 +369,12 @@ function ejs_render(req, res, page, HEADER) {
                 }
 
                 page = ejs.render(page, locals);
-                res.writeHead(200, HEADER);
+                res.writeHead(200, {'Content-Type': 'text/html'});
                 res.end(page);
             });
         } else {
             page = ejs.render(page, locals);
-            res.writeHead(200, HEADER);
+            res.writeHead(200, {'Content-Type': 'text/html'});
             res.end(page);
         }
         return true;
