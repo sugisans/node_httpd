@@ -21,10 +21,6 @@ let config = JSON.parse(configFile);
 const mime_type = JSON.parse(mimeFile);
 const status_code = JSON.parse(statusFile);
 const os = process.platform;
-const header_source = {
-    'Pragma': 'no-cache',
-    'Cache-Control': 'no-cache'
-}
 
 //config option
 for (let i = 2; i < process.argv.length; i += 2) {
@@ -209,6 +205,10 @@ cluster.on('exit', function(worker, code, signal) {
 //request
 function RouteSetting(req, res) {
     try {
+        const header_source = {
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache'
+        }
         const urldata = url.parse(req.url, true);
         const extname = String(path.extname(urldata.pathname)).toLowerCase();
         const dir = get_directory(req, urldata.pathname);
@@ -256,7 +256,7 @@ function RouteSetting(req, res) {
                 fs.readFile(file, encode, function(err, data) {
                     if (!err) {
                         if (index == 'index.ejs') {
-                            if (ejs_render(req, res, data)) return;
+                            if (ejs_render(req, res, data, header_source)) return;
                             code = 400;
                             page = status_page(code);
                         } else {
@@ -277,7 +277,8 @@ function RouteSetting(req, res) {
                         page = status_page(code);
                     }
 
-                    res.writeHead(code, { 'Content-Type': 'text/html' });
+                    header_source['Content-Type'] = 'text/html';
+                    res.writeHead(code, header_source);
                     res.end(page);
                 });
             } else { //not dir
@@ -285,7 +286,7 @@ function RouteSetting(req, res) {
                 fs.readFile(file, encode, function(err, data) {
                     if (!err) {
                         if (content_type == 'text/html' && extname == '.ejs') { //.ejs
-                            if (ejs_render(req, res, data)) return;
+                            if (ejs_render(req, res, data, header_source)) return;
                             code = 400;
                             page = status_page(code);
                         } else if (content_type === 'text/javascript' && config['escapejs'] === 'on') { //.js
@@ -336,7 +337,7 @@ function get_directory(req, pathname){
     }
 }
 
-function ejs_render(req, res, page) {
+function ejs_render(req, res, page, HEADER) {
    try {
         const POST = [];
         const GET = request_get(url.parse(req.url, true).search);
@@ -344,6 +345,7 @@ function ejs_render(req, res, page) {
         const DEFINE = JSON.parse(fs.readFileSync(root_dir + 'etc/define.json', 'UTF-8'));
         const SECURE = config['escapehtml'] && config['escapehtml'] === 'on';
         DEFINE['response'] = res;
+        HEADER['Content-Type'] = 'text/html';
         
         const locals = {
             POST: SECURE ? sanitizeObject(POST) : POST,
@@ -373,12 +375,12 @@ function ejs_render(req, res, page) {
                 }
 
                 page = ejs.render(page, locals);
-                res.writeHead(200, { 'Content-Type': 'text/html' });
+                res.writeHead(200, HEADER);
                 res.end(page);
             });
         } else {
             page = ejs.render(page, locals);
-            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.writeHead(200, HEADER);
             res.end(page);
         }
         return true;
