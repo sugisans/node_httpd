@@ -216,13 +216,13 @@ function RouteSetting(req, res) {
         let content_type = !extname ? 'text/html' : mime_type[extname] || 'text/plain';
         let encode = content_type.split('/', 2)[0] === 'text' ? 'UTF-8' : null;
         
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Cache-Control','no-cache');
         if (config['CACHE']['status'] === "on") {
             res.setHeader('Pragma', 'cache');
             res.setHeader('Cache-Control', `max-age=${config['CACHE']['max_age']}`)
+        }else{
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Cache-Control','no-cache');
         }
-
         if (config['LOG']['status'] === "on") {
             fs.appendFile(log_file, log_data, function(err) {
                 if (err) console.error("log write error");
