@@ -336,7 +336,7 @@ function get_directory(req, pathname){
 function ejs_render(req, res, page) {
    try {
         const POST = [];
-        const GET = request_get(url.parse(req.url, true).search);
+        const GET = request_get(new URL(req.url, `http://${req.headers.host}`).search);
         const COOKIE = get_cookie(req.headers['cookie']);
         const DEFINE = JSON.parse(fs.readFileSync(root_dir + 'etc/define.json', 'UTF-8'));
         const SECURE = config['escapehtml'] && config['escapehtml'] === 'on';
@@ -373,6 +373,7 @@ function ejs_render(req, res, page) {
                 res.end(page);
             });
         } else {
+            console.log(locals);
             page = ejs.render(page, locals);
             res.writeHead(200, {'Content-Type': 'text/html'});
             res.end(page);
