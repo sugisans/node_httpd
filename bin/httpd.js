@@ -205,7 +205,7 @@ cluster.on('exit', function(worker, code, signal) {
 //request
 function RouteSetting(req, res) {
     try {
-        const urldata = url.parse(req.url, true);
+        const urldata = new URL(req.url, `http://${req.headers.host}`);
         const extname = String(path.extname(urldata.pathname)).toLowerCase();
         const dir = get_directory(req, urldata.pathname);
         const ip = req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',', 2)[0] : req.socket['remoteAddress'];
