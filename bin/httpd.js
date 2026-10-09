@@ -373,7 +373,6 @@ function ejs_render(req, res, page) {
                 res.end(page);
             });
         } else {
-            console.log(locals);
             page = ejs.render(page, locals);
             res.writeHead(200, {'Content-Type': 'text/html'});
             res.end(page);
